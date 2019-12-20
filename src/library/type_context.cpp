@@ -3282,6 +3282,12 @@ bool type_context_old::is_def_eq_core_core(expr t, expr s) {
                scope_trace_env scope(env(), *this);
                tout() << "[" << m_is_def_eq_depth << "]: " << t << " =?= " << s << "\n";);
 
+    /* The type theory of Lean allows looping proof terms, so check
+       for proof-irrelevant equality before reducing anything in order
+       to prevent this looping from being observed. */
+    if (is_def_eq_proof_irrel(t, s))
+        return true;
+
     /* Apply beta/zeta/iota/macro reduction to t and s */
     {
         /* We do not reduce projections here. */
@@ -3345,8 +3351,6 @@ bool type_context_old::is_def_eq_core_core(expr t, expr s) {
     if (is_def_eq_eta(t, s))
         return true;
     if (is_def_eq_eta(s, t))
-        return true;
-    if (is_def_eq_proof_irrel(t, s))
         return true;
     return on_is_def_eq_failure(t, s);
 }
